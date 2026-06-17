@@ -7,6 +7,7 @@ import {globalErrorHandler} from './utils/error.utils.js'
 
 
 const app = express();
+app.set("trust proxy", 1);
 const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
   .split(",")
   .map((origin) => origin.trim())
