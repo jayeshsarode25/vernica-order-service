@@ -8,7 +8,11 @@ import {globalErrorHandler} from './utils/error.utils.js'
 
 const app = express();
 app.set("trust proxy", 1);
-const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:5173")
+const allowedOrigins = process.env.FRONTEND_URL || [
+  "http://localhost:5173",
+  "https://varnikaorganics.com",
+  "https://www.varnikaorganics.com",
+]
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
