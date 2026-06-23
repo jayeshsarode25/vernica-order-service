@@ -8,24 +8,23 @@ import {globalErrorHandler} from './utils/error.utils.js'
 
 const app = express();
 app.set("trust proxy", 1);
-const allowedOrigins = process.env.FRONTEND_URL || [
-  "http://localhost:5173",
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
   "https://varnikaorganics.com",
-  "https://www.varnikaorganics.com",
-]
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+  "http://localhost:5173",
+];
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error(`CORS blocked origin: ${origin}`));
-    },
-    credentials: true,
-  }),
-);
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS blocked origin: " + origin));
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
