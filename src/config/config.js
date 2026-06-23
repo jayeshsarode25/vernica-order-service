@@ -8,6 +8,7 @@ dotenvconfig();
 const REQUIRED_VARS = [
   "MONGO_URI",
   "JWT_SECRET",
+  "COOKIE_DOMAIN",
 ];
 
 const missing = REQUIRED_VARS.filter((key) => !process.env[key]);
@@ -22,6 +23,7 @@ if (missing.length > 0) {
 const _config = {
   MONGO_URI:        process.env.MONGO_URI,
   JWT_SECRET:       process.env.JWT_SECRET,
+  COOKIE_DOMAIN:    process.env.COOKIE_DOMAIN,
   CART_API_URL:     process.env.CART_API_URL || "http://localhost:3003/api/cart",
   PRODUCT_API_URL:  process.env.PRODUCT_API_URL || "http://localhost:3002/api/products",
 };

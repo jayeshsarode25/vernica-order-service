@@ -3,8 +3,9 @@ import config from "../config/config.js";
 
 export function createAuthMiddleware(role = ["user"]) {
   return function authMiddleware(req, res, next) {
+    const cookieToken = req.cookies?.token;
     const token =
-      req.cookies?.token || req.headers?.authorization?.split(" ")[1];
+      cookieToken || req.headers?.authorization?.split(" ")[1];
 
     if (!token) {
       return res.status(401).json({
@@ -13,12 +14,13 @@ export function createAuthMiddleware(role = ["user"]) {
     }
 
     try {
-      const decoded = jwt.verify(token, config.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const userId = decoded.userId ?? decoded.id ?? decoded._id;
       const auth = {
+        hasTokenCookie: Boolean(cookieToken),
         userId,
         role: decoded.role,
-        authenticated: true,
+        authenticated: Boolean(decoded),
       };
 
       if (!role.includes(auth.role)) {
