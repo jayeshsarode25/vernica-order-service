@@ -24,6 +24,7 @@ const _config = {
   MONGO_URI:        process.env.MONGO_URI,
   JWT_SECRET:       process.env.JWT_SECRET,
   COOKIE_DOMAIN:    process.env.COOKIE_DOMAIN,
+  AUTH_API_URL:     process.env.AUTH_API_URL || "http://localhost:3000/api/auth",
   CART_API_URL:     process.env.CART_API_URL || "http://localhost:3003/api/cart",
   PRODUCT_API_URL:  process.env.PRODUCT_API_URL || "http://localhost:3002/api/products",
 };

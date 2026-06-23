@@ -49,6 +49,40 @@ const attachProductDetails = async (orders, token) => {
 
   return Array.isArray(orders) ? enrichedOrders : enrichedOrders[0];
 };
+
+const fetchUsersByIds = async (userIds, token) => {
+  const uniqueIds = [...new Set(userIds.filter(Boolean).map((id) => id.toString()))];
+
+  const results = await Promise.allSettled(
+    uniqueIds.map(async (userId) => {
+      const response = await axios.get(`${config.AUTH_API_URL}/users/${userId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      return response.data;
+    }),
+  );
+
+  return results.reduce((map, result) => {
+    if (result.status === "fulfilled" && result.value?._id) {
+      map[result.value._id.toString()] = result.value;
+    }
+    return map;
+  }, {});
+};
+
+const attachUserDetails = async (orders, token) => {
+  const orderList = Array.isArray(orders) ? orders : [orders];
+  const userIds = orderList.map((order) => order.user?._id || order.user);
+  const usersById = await fetchUsersByIds(userIds, token);
+
+  const enrichedOrders = orderList.map((order) => {
+    const userId = order.user?._id || order.user;
+    const user = usersById[userId?.toString()];
+    return user ? { ...order, user } : order;
+  });
+
+  return Array.isArray(orders) ? enrichedOrders : enrichedOrders[0];
+};
 // ─────────────────────────────────────────────────────────────────
 // CREATE ORDER
 // ─────────────────────────────────────────────────────────────────
@@ -272,6 +306,7 @@ export const getOrderDashboard = catchAsync(async (req, res) => {
 export const updateOrderStatus = catchAsync(async (req, res) => {
   const { status } = req.body;
   const orderId = req.params.id;
+  const token = req.cookies?.token || req.headers?.authorization?.split(" ")[1];
 
   const allowedStatus = [
     "PENDING",
@@ -295,13 +330,19 @@ export const updateOrderStatus = catchAsync(async (req, res) => {
     throw new AppError("Order not found", 404);
   }
 
-  res.json({ message: "Order status updated", order });
+  const enrichedOrder = await attachUserDetails(
+    await attachProductDetails(order.toObject(), token),
+    token,
+  );
+
+  res.json({ message: "Order status updated", order: enrichedOrder });
 });
 
 // ─────────────────────────────────────────────────────────────────
 // ADMIN — GET ALL ORDERS
 // ─────────────────────────────────────────────────────────────────
 export const getAllOrders = catchAsync(async (req, res) => {
+  const token = req.cookies?.token || req.headers?.authorization?.split(" ")[1];
   const {
     page = 1,
     limit = 10,
@@ -339,11 +380,16 @@ export const getAllOrders = catchAsync(async (req, res) => {
     orderModel.countDocuments(filter),
   ]);
 
+  const enrichedOrders = await attachUserDetails(
+    await attachProductDetails(orders, token),
+    token,
+  );
+
   res.json({
     success: true,
     page: pageNum,
     totalPages: Math.ceil(totalOrders / limitNum),
     totalOrders,
-    data: orders,
+    data: enrichedOrders,
   });
 });
